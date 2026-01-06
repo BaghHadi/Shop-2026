@@ -1,0 +1,53 @@
+package fr.esiea.shop2026.usecase.service;
+
+import fr.esiea.shop2026.domain.entities.Cart;
+import fr.esiea.shop2026.domain.entities.Order;
+import fr.esiea.shop2026.domain.repository.CartRepository;
+import fr.esiea.shop2026.domain.repository.OrderEventRepository;
+import fr.esiea.shop2026.domain.repository.OrderRepository;
+
+import java.util.UUID;
+
+public class OrderService {
+
+    private final OrderRepository orderRepository;
+    private final CartRepository cartRepository;
+    private final OrderEventRepository orderEventRepository; // Interface vers Kafka
+
+    public OrderService(OrderRepository orderRepository,
+                        CartRepository cartRepository,
+                        OrderEventRepository orderEventRepository) {
+        this.orderRepository = orderRepository;
+        this.cartRepository = cartRepository;
+        this.orderEventRepository = orderEventRepository;
+    }
+
+    public Order createOrderFromCart(UUID userId) {
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Cannot create order: Cart is empty or not found"));
+
+        if (cart.getItems().isEmpty()) {
+            throw new RuntimeException("Cannot create order: Cart is empty");
+        }
+
+        Order order = new Order(
+                UUID.randomUUID(),
+                userId,
+                cart.getItems(),
+                cart.calculateTotal()
+        );
+        Order savedOrder = orderRepository.save(order);
+
+        cartRepository.deleteById(cart.getId());
+
+        // KAFKA : Publier l'événement "Commande Créée"
+        // C'est ici que tu respectes la contrainte "Kafka réellement utilisé"
+        orderEventRepository.publishOrderCreated(savedOrder);
+
+        return savedOrder;
+    }
+    public Order getOrder(UUID orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+    }
+}
