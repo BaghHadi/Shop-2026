@@ -2,7 +2,7 @@ package fr.esiea.shop2026.usecase.service;
 
 import fr.esiea.shop2026.domain.entities.User;
 import fr.esiea.shop2026.domain.entities.UserEnum;
-import fr.esiea.shop2026.repository.UserRepository;
+import fr.esiea.shop2026.domain.repository.UserRepository;
 
 import java.util.List;
 

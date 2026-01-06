@@ -3,7 +3,7 @@ package fr.esiea.shop2026.usecase.service;
 import fr.esiea.shop2026.domain.entities.Favorite;
 import fr.esiea.shop2026.domain.entities.Product;
 import fr.esiea.shop2026.domain.entities.User;
-import fr.esiea.shop2026.repository.FavoriteRepository;
+import fr.esiea.shop2026.domain.repository.FavoriteRepository;
 
 import java.util.List;
 
