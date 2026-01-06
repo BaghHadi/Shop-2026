@@ -1,4 +1,4 @@
 package fr.esiea.shop2026.domain.entities;
 
-public class Panier {
+public class Favorite {
 }

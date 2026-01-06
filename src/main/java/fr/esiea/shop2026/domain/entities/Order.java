@@ -1,6 +1,4 @@
 package fr.esiea.shop2026.domain.entities;
 
-public class Utilisateur {
-
-
+public class Order {
 }
