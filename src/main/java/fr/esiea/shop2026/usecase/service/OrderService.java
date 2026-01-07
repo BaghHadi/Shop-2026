@@ -6,6 +6,7 @@ import fr.esiea.shop2026.domain.repository.CartRepository;
 import fr.esiea.shop2026.domain.repository.OrderEventRepository;
 import fr.esiea.shop2026.domain.repository.OrderRepository;
 
+import java.util.List;
 import java.util.UUID;
 
 public class OrderService {
@@ -46,5 +47,8 @@ public class OrderService {
     public Order getOrder(UUID orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
+    }
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
     }
 }

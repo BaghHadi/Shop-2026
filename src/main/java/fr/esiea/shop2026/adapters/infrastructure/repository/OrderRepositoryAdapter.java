@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -50,5 +51,26 @@ public class OrderRepositoryAdapter implements OrderRepository {
         Order order = new Order(entity.getId(), entity.getUserId(), domainItems, entity.getTotalAmount());
         order.setStatus(entity.getStatus());
         return Optional.of(order);
+    }
+    @Override
+    public List<Order> findAll() {
+        return orderJpaRepository.findAll().stream()
+                .map(this::toDomain) // On convertit chaque ligne trouvée
+                .collect(Collectors.toList());
+    }
+
+    private Order toDomain(OrderEntity entity) {
+        List<CartItem> domainItems = new ArrayList<>();
+
+        for (OrderItemEntity itemEntity : entity.getItems()) {
+            productJpaRepository.findById(itemEntity.getProductId()).ifPresent(pe -> {
+                Product p = new Product(pe.getId(), pe.getName(), pe.getDescription(), itemEntity.getPriceAtOrderTime(), pe.getStockQuantity());
+                domainItems.add(new CartItem(p, itemEntity.getQuantity()));
+            });
+        }
+
+        Order order = new Order(entity.getId(), entity.getUserId(), domainItems, entity.getTotalAmount());
+        order.setStatus(entity.getStatus());
+        return order;
     }
 }
