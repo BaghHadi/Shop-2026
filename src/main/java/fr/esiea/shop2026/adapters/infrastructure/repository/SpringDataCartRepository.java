@@ -1,6 +1,6 @@
-package fr.esiea.shop2026.adapters.infrastructure.persistence.repository;
+package fr.esiea.shop2026.adapters.infrastructure.repository;
 
-import fr.esiea.shop2026.adapters.infrastructure.persistence.entity.CartEntity;
+import fr.esiea.shop2026.adapters.infrastructure.entity.CartEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

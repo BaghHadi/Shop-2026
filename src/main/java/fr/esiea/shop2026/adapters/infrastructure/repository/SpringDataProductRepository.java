@@ -1,6 +1,6 @@
-package fr.esiea.shop2026.adapters.infrastructure.persistence.repository;
+package fr.esiea.shop2026.adapters.infrastructure.repository;
 
-import fr.esiea.shop2026.adapters.infrastructure.persistence.entity.ProductEntity;
+import fr.esiea.shop2026.adapters.infrastructure.entity.ProductEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
