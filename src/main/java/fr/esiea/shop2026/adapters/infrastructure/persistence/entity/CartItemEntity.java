@@ -1,18 +1,17 @@
-package fr.esiea.shop2026.infrastructure.persistence.entity;
+package fr.esiea.shop2026.adapters.infrastructure.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
-@Table(name = "order_items")
+@Table(name = "cart_items")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderItemEntity {
+public class CartItemEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -20,5 +19,4 @@ public class OrderItemEntity {
 
     private UUID productId;
     private int quantity;
-    private BigDecimal priceAtOrderTime;
 }

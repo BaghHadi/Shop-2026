@@ -1,4 +1,4 @@
-package fr.esiea.shop2026.infrastructure.persistence.entity;
+package fr.esiea.shop2026.adapters.infrastructure.persistence.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
