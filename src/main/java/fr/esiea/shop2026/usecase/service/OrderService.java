@@ -39,9 +39,6 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
 
         cartRepository.deleteById(cart.getId());
-
-        // KAFKA : Publier l'événement "Commande Créée"
-        // C'est ici que tu respectes la contrainte "Kafka réellement utilisé"
         orderEventRepository.publishOrderCreated(savedOrder);
 
         return savedOrder;
