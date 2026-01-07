@@ -4,6 +4,7 @@ import fr.esiea.shop2026.domain.entities.User;
 import fr.esiea.shop2026.domain.entities.UserEnum;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface UserRepository {
 
@@ -17,7 +18,7 @@ public interface UserRepository {
     List<User> getAllUsers();
 
     // Gey a user by its ID
-    User getUserById(String userID);
+    User getUserById(UUID userID);
 
     // Remove a user from DB
     boolean removeUser(User user);

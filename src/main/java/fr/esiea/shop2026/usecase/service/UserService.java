@@ -5,6 +5,7 @@ import fr.esiea.shop2026.domain.entities.UserEnum;
 import fr.esiea.shop2026.domain.repository.UserRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 public class UserService {
 
@@ -30,7 +31,7 @@ public class UserService {
     }
 
     
-    public User getUserById(String userID) {
+    public User getUserById(UUID userID) {
         return null;
     }
 
