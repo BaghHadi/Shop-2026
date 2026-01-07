@@ -6,6 +6,7 @@ import fr.esiea.shop2026.domain.entities.User;
 import fr.esiea.shop2026.repository.FavoriteRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 public class FavoriteService {
 
@@ -41,7 +42,7 @@ public class FavoriteService {
     }
 
 
-    public Favorite getFavoriteListById(String favoriteListID) {
+    public Favorite getFavoriteListById(UUID favoriteListID) {
         return null;
     }
 

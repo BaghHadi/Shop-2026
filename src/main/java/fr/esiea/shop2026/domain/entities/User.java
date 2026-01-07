@@ -3,11 +3,13 @@ package fr.esiea.shop2026.domain.entities;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 
 @Setter
 @Getter
 public class User {
-    String id;
+    UUID id;
     String firstName;
     String lastName;
     String email;
@@ -27,7 +29,7 @@ public class User {
         this.role = null;
     }
 
-    public User(String id, String firstName, String lastName, String email, String password, String deliveryAddress, String phone, UserEnum role) {
+    public User(UUID id, String firstName, String lastName, String email, String password, String deliveryAddress, String phone, UserEnum role) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
