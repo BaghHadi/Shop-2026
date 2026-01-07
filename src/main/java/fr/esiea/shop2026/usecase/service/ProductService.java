@@ -19,6 +19,11 @@ public class ProductService {
         if (product.getPrice().compareTo(BigDecimal.ZERO) < 0) {
             throw new RuntimeException("Price cannot be negative");
         }
+
+        if (product.getId() == null) {
+            product.setId(UUID.randomUUID());
+        }
+
         return productRepository.save(product);
     }
 
