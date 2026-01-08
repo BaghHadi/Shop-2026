@@ -28,12 +28,8 @@ public class ProductController {
     @Operation(summary = "Créer un produit", description = "Ajoute un nouveau produit au catalogue avec son stock et son prix.")
     @PostMapping
     public ResponseEntity<ProductResponseDTO> create(@RequestBody ProductRequestDTO dto) {
-        // Mapping DTO -> Entity
         Product productToCreate = new Product(null, dto.name, dto.description, dto.price, dto.stockQuantity);
-
         Product created = productService.createProduct(productToCreate);
-
-        // Mapping Entity -> ResponseDTO
         return ResponseEntity.ok(mapToResponse(created));
     }
 
@@ -41,12 +37,9 @@ public class ProductController {
     @Operation(summary = "Récupérer un produit", description = "Retourne les détails d'un produit spécifique via son ID.")
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponseDTO> getById(@PathVariable UUID id) {
-        try {
-            Product product = productService.getProduct(id);
-            return ResponseEntity.ok(mapToResponse(product));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        // ✅ Pas de try-catch : NotFoundException sera géré par GlobalExceptionHandler
+        Product product = productService.getProduct(id);
+        return ResponseEntity.ok(mapToResponse(product));
     }
 
     // GET /products
@@ -70,18 +63,12 @@ public class ProductController {
     @Operation(summary = "Modifier un produit", description = "Met à jour les informations (nom, prix, stock) d'un produit existant.")
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponseDTO> updateProduct(@PathVariable UUID id, @RequestBody ProductRequestDTO dto) {
-        try {
-            // Mapping DTO -> Entity
-            Product productInfos = new Product(null, dto.name, dto.description, dto.price, dto.stockQuantity);
-
-            Product updated = productService.updateProduct(id, productInfos);
-            return ResponseEntity.ok(mapToResponse(updated));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        // ✅ Pas de try-catch
+        Product productInfos = new Product(null, dto.name, dto.description, dto.price, dto.stockQuantity);
+        Product updated = productService.updateProduct(id, productInfos);
+        return ResponseEntity.ok(mapToResponse(updated));
     }
 
-    // Helper privé pour convertir Product -> ProductResponseDTO
     private ProductResponseDTO mapToResponse(Product p) {
         return new ProductResponseDTO(p.getId(), p.getName(), p.getDescription(), p.getPrice(), p.getStockQuantity());
     }

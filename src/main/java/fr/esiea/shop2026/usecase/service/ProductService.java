@@ -1,6 +1,7 @@
 package fr.esiea.shop2026.usecase.service;
 
 import fr.esiea.shop2026.domain.entities.Product;
+import fr.esiea.shop2026.domain.exception.NotFoundException;
 import fr.esiea.shop2026.domain.repository.ProductRepository;
 
 import java.math.BigDecimal;
@@ -17,7 +18,8 @@ public class ProductService {
 
     public Product createProduct(Product product) {
         if (product.getPrice().compareTo(BigDecimal.ZERO) < 0) {
-            throw new RuntimeException("Price cannot be negative");
+            // IllegalArgumentException est plus standard java pour un argument invalide
+            throw new IllegalArgumentException("Price cannot be negative");
         }
 
         if (product.getId() == null) {
@@ -29,7 +31,8 @@ public class ProductService {
 
     public void modifyProduct(Product product) {
         if (productRepository.findById(product.getId()).isEmpty()) {
-            throw new RuntimeException("Product not found");
+            // ✅ NotFoundException
+            throw new NotFoundException("Product", product.getId());
         }
         productRepository.save(product);
     }
@@ -39,16 +42,18 @@ public class ProductService {
     }
 
     public Product getProduct(UUID id) {
+        // ✅ NotFoundException
         return productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found with ID: " + id));
+                .orElseThrow(() -> new NotFoundException("Product", id));
     }
 
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
+
     public Product updateProduct(UUID id, Product newInfos) {
-        // 1. On cherche le produit existant
-        Product existingProduct = getProduct(id); // (Utilise ta méthode getProduct qui lance une exception si pas trouvé)
+        // 1. On cherche le produit existant (lance NotFoundException si absent)
+        Product existingProduct = getProduct(id);
 
         // 2. On met à jour les champs
         existingProduct.setName(newInfos.getName());
@@ -56,7 +61,7 @@ public class ProductService {
         existingProduct.setPrice(newInfos.getPrice());
         existingProduct.setStockQuantity(newInfos.getStockQuantity());
 
-        // 3. On sauvegarde (JPA va comprendre que c'est une mise à jour car l'ID existe déjà)
+        // 3. On sauvegarde
         return productRepository.save(existingProduct);
     }
 }

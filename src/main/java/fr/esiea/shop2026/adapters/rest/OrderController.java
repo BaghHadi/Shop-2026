@@ -28,23 +28,17 @@ public class OrderController {
     @Operation(summary = "Créer une commande", description = "Transforme le panier actuel de l'utilisateur en une nouvelle commande en statut PENDING.")
     @PostMapping("/{userId}")
     public ResponseEntity<OrderResponseDTO> createOrder(@PathVariable UUID userId) {
-        try {
-            Order order = orderService.createOrderFromCart(userId);
-            return ResponseEntity.ok(mapToDTO(order));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build(); // Panier vide
-        }
+        // ✅ Pas de try-catch : EmptyCartException ou NotFoundException seront gérés automatiquement
+        Order order = orderService.createOrderFromCart(userId);
+        return ResponseEntity.ok(mapToDTO(order));
     }
 
     // GET /orders/{id}
     @Operation(summary = "Voir une commande", description = "Récupère les détails d'une commande spécifique (statut, total, articles).")
     @GetMapping("/{id}")
     public ResponseEntity<OrderResponseDTO> getOrder(@PathVariable UUID id) {
-        try {
-            return ResponseEntity.ok(mapToDTO(orderService.getOrder(id)));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        // ✅ Pas de try-catch
+        return ResponseEntity.ok(mapToDTO(orderService.getOrder(id)));
     }
 
     // GET /orders
@@ -61,16 +55,11 @@ public class OrderController {
     @Operation(summary = "Valider une commande", description = "Passe le statut d'une commande de PENDING à CONFIRMED.")
     @PatchMapping("/{id}/validate")
     public ResponseEntity<OrderResponseDTO> validateOrder(@PathVariable UUID id) {
-        try {
-            return ResponseEntity.ok(mapToDTO(orderService.validateOrder(id)));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        // ✅ Pas de try-catch
+        return ResponseEntity.ok(mapToDTO(orderService.validateOrder(id)));
     }
 
-    // --- Helper de conversion Entity -> DTO ---
     private OrderResponseDTO mapToDTO(Order order) {
-        // 1. On convertit d'abord les items (Entité -> DTO)
         List<OrderItemDTO> itemDTOs = order.getItems().stream()
                 .map(item -> new OrderItemDTO(
                         item.getProduct().getName(),
@@ -79,7 +68,6 @@ public class OrderController {
                         item.getSubTotal()
                 )).collect(Collectors.toList());
 
-        // 2. On crée le DTO global
         return new OrderResponseDTO(
                 order.getId(),
                 order.getUserId(),
