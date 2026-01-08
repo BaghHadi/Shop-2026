@@ -13,15 +13,18 @@ import java.util.UUID;
 
 public class ShopConsoleClient {
 
+    // Configuration
     private static final String BASE_URL = "http://localhost:8080";
     private static final HttpClient client = HttpClient.newHttpClient();
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Scanner scanner = new Scanner(System.in);
 
-    // UUID de l'utilisateur courant (simulé)
-    private static UUID currentUserId = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+    // Session Utilisateur Courante
+    private static UUID currentUserId = null;
+    private static String currentUserRole = null; // "CLIENT" ou "SELLER"
+    private static String currentUserName = null;
 
-    // Couleurs pour faire joli
+    // Couleurs pour la console
     private static final String RESET = "\033[0m";
     private static final String RED = "\033[0;31m";
     private static final String GREEN = "\033[0;32m";
@@ -31,170 +34,264 @@ public class ShopConsoleClient {
 
     public static void main(String[] args) {
         System.out.println(BLUE_BOLD + "==========================================" + RESET);
-        System.out.println(BLUE_BOLD + "    BIENVENUE DANS LE SHOP ESIEA 2026     " + RESET);
+        System.out.println(BLUE_BOLD + "       BIENVENUE SUR SHOP 2026            " + RESET);
         System.out.println(BLUE_BOLD + "==========================================" + RESET);
 
-        System.out.print("Entrez votre ID Utilisateur (Entrée pour défaut): ");
-        String inputId = scanner.nextLine();
-        if (!inputId.isBlank()) {
-            try {
-                currentUserId = UUID.fromString(inputId);
-            } catch (Exception e) {
-                System.out.println(RED + "ID invalide, utilisation de l'ID par défaut." + RESET);
-            }
-        }
-        System.out.println(GREEN + "Connecté en tant que : " + currentUserId + RESET);
-
         while (true) {
-            printMainMenu();
-            String choice = scanner.nextLine();
-
-            switch (choice) {
-                case "1" -> menuProducts();
-                case "2" -> menuCart();
-                case "3" -> menuOrders();
-                case "9" -> changeUser();
-                case "0" -> {
-                    System.out.println(YELLOW + "Au revoir !" + RESET);
-                    return;
+            if (currentUserId == null) {
+                authMenu();
+            } else {
+                if ("SELLER".equals(currentUserRole)) {
+                    sellerMenu();
+                } else {
+                    clientMenu();
                 }
-                default -> System.out.println(RED + "Choix invalide." + RESET);
             }
-            waitForKey();
         }
     }
 
-    // --- MENUS ---
-
-    private static void printMainMenu() {
-        System.out.println("\n" + CYAN + "--- MENU PRINCIPAL ---" + RESET);
-        System.out.println("1. 📦 Gérer les Produits (Catalogue)");
-        System.out.println("2. 🛒 Mon Panier");
-        System.out.println("3. 💳 Mes Commandes");
-        System.out.println("9. 👤 Changer d'utilisateur");
-        System.out.println("0. 🚪 Quitter");
+    // ==========================================
+    // 🔐 AUTHENTIFICATION
+    // ==========================================
+    private static void authMenu() {
+        System.out.println(CYAN + "\n--- CONNEXION / INSCRIPTION ---" + RESET);
+        System.out.println("1. Se connecter");
+        System.out.println("2. S'inscrire");
+        System.out.println("0. Quitter");
         System.out.print("Votre choix : ");
-    }
-
-    private static void menuProducts() {
-        System.out.println("\n" + CYAN + "--- PRODUITS ---" + RESET);
-        System.out.println("1. Lister tout");
-        System.out.println("2. Détails d'un produit (ID)");
-        System.out.println("3. Créer un produit (Admin)");
-        System.out.println("4. Supprimer un produit (Admin)");
-        System.out.print("Choix : ");
         String choice = scanner.nextLine();
 
+        switch (choice) {
+            case "1" -> login();
+            case "2" -> register();
+            case "0" -> {
+                System.out.println("Au revoir !");
+                System.exit(0);
+            }
+            default -> System.out.println(RED + "Choix invalide." + RESET);
+        }
+    }
+
+    private static void login() {
+        System.out.print("Email : ");
+        String email = scanner.nextLine();
+        System.out.print("Mot de passe : ");
+        String pwd = scanner.nextLine();
+
+        // Création manuelle du JSON pour login
+        String json = String.format("{\"email\":\"%s\", \"password\":\"%s\"}", email, pwd);
+        JsonNode response = sendRequest("POST", "/users/login", json);
+
+        if (response != null) {
+            currentUserId = UUID.fromString(response.get("id").asText());
+            currentUserRole = response.get("role").asText(); // Suppose que le JSON renvoie "role"
+            currentUserName = response.get("firstName").asText();
+            System.out.println(GREEN + "✅ Bonjour " + currentUserName + " (" + currentUserRole + ") !" + RESET);
+        }
+    }
+
+    private static void register() {
+        System.out.println("\n--- NOUVEAU COMPTE ---");
+        System.out.print("Prénom : "); String fname = scanner.nextLine();
+        System.out.print("Nom : "); String lname = scanner.nextLine();
+        System.out.print("Email : "); String email = scanner.nextLine();
+        System.out.print("Mot de passe : "); String pwd = scanner.nextLine();
+        System.out.print("Adresse : "); String addr = scanner.nextLine();
+        System.out.print("Téléphone : "); String phone = scanner.nextLine();
+
+        System.out.println("Rôle :");
+        System.out.println("  1. Client");
+        System.out.println("  2. Vendeur (Seller)");
+        System.out.print("Choix : ");
+        String roleChoice = scanner.nextLine();
+        String role = "CLIENT";
+        if ("2".equals(roleChoice)) role = "SELLER";
+
+        String json = String.format(
+                "{\"firstName\":\"%s\", \"lastName\":\"%s\", \"email\":\"%s\", \"password\":\"%s\", \"address\":\"%s\", \"phone\":\"%s\", \"role\":\"%s\"}",
+                fname, lname, email, pwd, addr, phone, role
+        );
+
+        sendRequest("POST", "/users/register", json);
+        System.out.println(GREEN + "Compte créé avec succès ! Veuillez vous connecter." + RESET);
+    }
+
+    private static void logout() {
+        currentUserId = null;
+        currentUserRole = null;
+        currentUserName = null;
+        System.out.println(YELLOW + "👋 Vous êtes déconnecté." + RESET);
+    }
+
+    // ==========================================
+    // 💼 MENU VENDEUR (SELLER)
+    // ==========================================
+    private static void sellerMenu() {
+        System.out.println(CYAN + "\n=== ESPACE VENDEUR (" + currentUserName + ") ===" + RESET);
+        System.out.println("1. 📦 Voir mes produits");
+        System.out.println("2. ➕ Ajouter un produit");
+        System.out.println("3. ✏️ Modifier un produit");
+        System.out.println("4. 🗑️ Supprimer un produit");
+        System.out.println("---------------------------");
+        System.out.println("5. 📜 Voir TOUTES les commandes");
+        System.out.println("6. ✅ Valider une commande");
+        System.out.println("---------------------------");
+        System.out.println("9. 🚪 Déconnexion");
+        System.out.print("Choix : ");
+
+        String choice = scanner.nextLine();
         switch (choice) {
             case "1" -> sendRequest("GET", "/products", null);
-            case "2" -> {
-                System.out.print("ID du produit : ");
-                sendRequest("GET", "/products/" + scanner.nextLine(), null);
-            }
-            case "3" -> createProductWizard();
-            case "4" -> {
-                System.out.print("ID à supprimer : ");
-                sendRequest("DELETE", "/products/" + scanner.nextLine(), null);
-            }
+            case "2" -> createProduct();
+            case "3" -> updateProduct();
+            case "4" -> deleteProduct();
+            case "5" -> sendRequest("GET", "/orders", null);
+            case "6" -> validateOrder();
+            case "9" -> logout();
+            default -> System.out.println(RED + "Option invalide." + RESET);
         }
     }
 
-    private static void menuCart() {
-        System.out.println("\n" + CYAN + "--- PANIER ---" + RESET);
-        System.out.println("1. Voir mon panier");
-        System.out.println("2. Ajouter un produit");
-        System.out.println("3. Retirer un produit");
-        System.out.print("Choix : ");
-        String choice = scanner.nextLine();
-
-        switch (choice) {
-            case "1" -> sendRequest("GET", "/carts/" + currentUserId, null);
-            case "2" -> addToCartWizard();
-            case "3" -> {
-                System.out.print("ID du produit à retirer : ");
-                sendRequest("DELETE", "/carts/" + currentUserId + "/items/" + scanner.nextLine(), null);
-            }
-        }
-    }
-
-    private static void menuOrders() {
-        System.out.println("\n" + CYAN + "--- COMMANDES ---" + RESET);
-        System.out.println("1. 💸 Passer commande (Valider panier)");
-        System.out.println("2. 📜 Historique des commandes");
-        System.out.println("3. 🔍 Voir une commande spécifique");
-        System.out.println("4. ✅ Valider une commande (Simu Admin)");
-        System.out.print("Choix : ");
-        String choice = scanner.nextLine();
-
-        switch (choice) {
-            case "1" -> sendRequest("POST", "/orders/" + currentUserId, null);
-            case "2" -> sendRequest("GET", "/orders", null);
-            case "3" -> {
-                System.out.print("ID de la commande : ");
-                sendRequest("GET", "/orders/" + scanner.nextLine(), null);
-            }
-            case "4" -> {
-                System.out.print("ID de la commande à valider : ");
-                sendRequest("PATCH", "/orders/" + scanner.nextLine() + "/validate", null);
-            }
-        }
-    }
-
-    // --- WIZARDS (Aide à la saisie) ---
-
-    private static void createProductWizard() {
+    private static void createProduct() {
         try {
-            System.out.print("Nom : ");
-            String name = scanner.nextLine();
-            System.out.print("Description : ");
-            String desc = scanner.nextLine();
-            System.out.print("Prix (ex: 10.5) : ");
-            double price = Double.parseDouble(scanner.nextLine());
-            System.out.print("Stock : ");
-            int stock = Integer.parseInt(scanner.nextLine());
+            System.out.print("Nom du produit : "); String name = scanner.nextLine();
+            System.out.print("Description : "); String desc = scanner.nextLine();
+            System.out.print("Prix (ex: 10.50) : "); double price = Double.parseDouble(scanner.nextLine());
+            System.out.print("Quantité stock : "); int stock = Integer.parseInt(scanner.nextLine());
 
-            // Construction JSON à la main pour éviter de dupliquer les DTOs ici
             String json = String.format(
                     "{\"name\":\"%s\", \"description\":\"%s\", \"price\":%s, \"stockQuantity\":%d}",
                     name, desc, price, stock
             );
             sendRequest("POST", "/products", json);
-
         } catch (Exception e) {
-            System.out.println(RED + "Erreur de saisie." + RESET);
+            System.out.println(RED + "Erreur de saisie (vérifiez le prix/stock)." + RESET);
         }
     }
 
-    private static void addToCartWizard() {
+    private static void updateProduct() {
         try {
-            System.out.print("ID du Produit : ");
-            String prodId = scanner.nextLine();
-            System.out.print("Quantité : ");
-            int qty = Integer.parseInt(scanner.nextLine());
+            System.out.print("ID du produit à modifier : "); String id = scanner.nextLine();
+            System.out.println("--- Nouvelles infos ---");
+            System.out.print("Nom : "); String name = scanner.nextLine();
+            System.out.print("Description : "); String desc = scanner.nextLine();
+            System.out.print("Prix : "); double price = Double.parseDouble(scanner.nextLine());
+            System.out.print("Quantité stock : "); int stock = Integer.parseInt(scanner.nextLine());
 
             String json = String.format(
-                    "{\"userId\":\"%s\", \"productId\":\"%s\", \"quantity\":%d}",
-                    currentUserId, prodId, qty
+                    "{\"name\":\"%s\", \"description\":\"%s\", \"price\":%s, \"stockQuantity\":%d}",
+                    name, desc, price, stock
             );
-            sendRequest("POST", "/carts/add", json);
+            sendRequest("PUT", "/products/" + id, json);
         } catch (Exception e) {
             System.out.println(RED + "Erreur de saisie." + RESET);
         }
     }
 
-    private static void changeUser() {
-        System.out.print("Nouvel UUID : ");
-        try {
-            currentUserId = UUID.fromString(scanner.nextLine());
-            System.out.println(GREEN + "Utilisateur changé !" + RESET);
-        } catch (Exception e) {
-            System.out.println(RED + "UUID Invalide." + RESET);
+    private static void deleteProduct() {
+        System.out.print("ID du produit à supprimer : ");
+        String id = scanner.nextLine();
+        sendRequest("DELETE", "/products/" + id, null);
+    }
+
+    private static void validateOrder() {
+        System.out.print("ID de la commande à valider : ");
+        String id = scanner.nextLine();
+        sendRequest("PATCH", "/orders/" + id + "/validate", null);
+    }
+
+    // ==========================================
+    // 🛒 MENU CLIENT (BUYER)
+    // ==========================================
+    private static void clientMenu() {
+        System.out.println(CYAN + "\n=== ESPACE CLIENT (" + currentUserName + ") ===" + RESET);
+        System.out.println("1. 🛍️ Catalogue Produits");
+        System.out.println("2. 🛒 Mon Panier");
+        System.out.println("3. ❤️ Mes Favoris");
+        System.out.println("4. 💳 Passer Commande");
+        System.out.println("5. 📜 Mes Commandes (Historique)");
+        System.out.println("9. 🚪 Déconnexion");
+        System.out.print("Choix : ");
+
+        String choice = scanner.nextLine();
+        switch (choice) {
+            case "1" -> sendRequest("GET", "/products", null);
+            case "2" -> cartMenu();
+            case "3" -> favoritesMenu();
+            case "4" -> sendRequest("POST", "/orders/" + currentUserId, null);
+            case "5" -> System.out.println(YELLOW + "Note: Pour voir 'Mes' commandes, on pourrait filtrer, mais voici tout l'historique pour l'instant :" + RESET + "\n" + sendRequest("GET", "/orders", null));
+            case "9" -> logout();
+            default -> System.out.println(RED + "Option invalide." + RESET);
         }
     }
 
-    // --- MOTEUR HTTP ---
+    private static void cartMenu() {
+        System.out.println(CYAN + "\n--- MON PANIER ---" + RESET);
+        sendRequest("GET", "/carts/" + currentUserId, null);
 
-    private static void sendRequest(String method, String endpoint, String jsonBody) {
+        System.out.println("\nActions :");
+        System.out.println("1. Ajouter un produit");
+        System.out.println("2. Retirer un produit");
+        System.out.println("0. Retour");
+        System.out.print("Choix : ");
+
+        String subChoice = scanner.nextLine();
+        if ("1".equals(subChoice)) {
+            try {
+                System.out.print("ID Produit : "); String pid = scanner.nextLine();
+                System.out.print("Quantité : "); int qty = Integer.parseInt(scanner.nextLine());
+                String json = String.format("{\"userId\":\"%s\", \"productId\":\"%s\", \"quantity\":%d}", currentUserId, pid, qty);
+                sendRequest("POST", "/carts/add", json);
+            } catch (Exception e) { System.out.println(RED + "Erreur de saisie" + RESET); }
+        } else if ("2".equals(subChoice)) {
+            System.out.print("ID Produit à retirer : "); String pid = scanner.nextLine();
+            sendRequest("DELETE", "/carts/" + currentUserId + "/items/" + pid, null);
+        }
+    }
+
+    private static void favoritesMenu() {
+        System.out.println(CYAN + "\n--- MES FAVORIS ---" + RESET);
+        // ✅ URL CORRIGÉE ICI : /favorites/user/{id}
+        sendRequest("GET", "/favorites/user/" + currentUserId, null);
+
+        System.out.println("\nActions :");
+        System.out.println("1. Ajouter un produit aux favoris");
+        System.out.println("2. Retirer un produit des favoris");
+        System.out.println("0. Retour");
+        System.out.print("Choix : ");
+
+        String subChoice = scanner.nextLine();
+        if ("1".equals(subChoice)) {
+            System.out.print("ID Produit : "); String pid = scanner.nextLine();
+            // Récupérer l'ID de la liste de favoris est complexe ici sans faire un GET avant.
+            // Pour simplifier, on suppose que le user a déjà une liste.
+            // Astuce : On récupère d'abord la liste pour avoir son ID
+            JsonNode favList = sendRequest("GET", "/favorites/user/" + currentUserId, null);
+            if (favList != null && favList.has("id")) {
+                String favId = favList.get("id").asText();
+                sendRequest("POST", "/favorites/" + favId + "/products/" + pid, null);
+            } else {
+                // Si pas de liste, on la crée
+                JsonNode newList = sendRequest("POST", "/favorites/user/" + currentUserId, null);
+                if(newList != null) {
+                    String newId = newList.get("id").asText();
+                    sendRequest("POST", "/favorites/" + newId + "/products/" + pid, null);
+                }
+            }
+        } else if ("2".equals(subChoice)) {
+            System.out.print("ID Produit : "); String pid = scanner.nextLine();
+            JsonNode favList = sendRequest("GET", "/favorites/user/" + currentUserId, null);
+            if (favList != null && favList.has("id")) {
+                String favId = favList.get("id").asText();
+                sendRequest("DELETE", "/favorites/" + favId + "/products/" + pid, null);
+            }
+        }
+    }
+
+    // ==========================================
+    // 📡 MOTEUR HTTP (Générique)
+    // ==========================================
+    private static JsonNode sendRequest(String method, String endpoint, String jsonBody) {
         try {
             HttpRequest.Builder builder = HttpRequest.newBuilder()
                     .uri(URI.create(BASE_URL + endpoint))
@@ -203,36 +300,31 @@ public class ShopConsoleClient {
             switch (method) {
                 case "GET" -> builder.GET();
                 case "POST" -> builder.POST(HttpRequest.BodyPublishers.ofString(jsonBody == null ? "" : jsonBody));
-                case "PUT" -> builder.PUT(HttpRequest.BodyPublishers.ofString(jsonBody));
+                case "PUT" -> builder.PUT(HttpRequest.BodyPublishers.ofString(jsonBody == null ? "" : jsonBody));
                 case "DELETE" -> builder.DELETE();
                 case "PATCH" -> builder.method("PATCH", HttpRequest.BodyPublishers.ofString(jsonBody == null ? "" : jsonBody));
             }
 
             HttpResponse<String> response = client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
 
-            System.out.println("------------------------------------------");
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                System.out.println(GREEN + "SUCCÈS (" + response.statusCode() + ")" + RESET);
-                if (!response.body().isEmpty()) {
-                    // Pretty Print JSON
+                if (response.body() != null && !response.body().isEmpty()) {
                     JsonNode node = mapper.readTree(response.body());
+                    // Affichage joli du JSON
+                    System.out.println(GREEN + "✅ Réponse :" + RESET);
                     System.out.println(node.toPrettyString());
-                } else {
-                    System.out.println("(Aucun contenu retourné)");
+                    return node;
                 }
+                System.out.println(GREEN + "✅ Succès (Aucun contenu)" + RESET);
+                return null;
             } else {
-                System.out.println(RED + "ERREUR (" + response.statusCode() + ")" + RESET);
+                System.out.println(RED + "❌ Erreur " + response.statusCode() + ":" + RESET);
                 System.out.println(response.body());
+                return null;
             }
-            System.out.println("------------------------------------------");
-
-        } catch (IOException | InterruptedException e) {
-            System.out.println(RED + "Erreur de connexion : " + e.getMessage() + RESET);
+        } catch (Exception e) {
+            System.out.println(RED + "⚠️ Erreur de connexion : " + e.getMessage() + RESET);
+            return null;
         }
-    }
-
-    private static void waitForKey() {
-        System.out.println("\nAppuyez sur Entrée pour continuer...");
-        scanner.nextLine();
     }
 }
