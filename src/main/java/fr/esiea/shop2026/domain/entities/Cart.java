@@ -27,4 +27,8 @@ public class Cart {
                 .map(CartItem::getSubTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+    public void removeProduct(UUID productId) {
+        // Supprime l'item si l'ID du produit correspond
+        this.items.removeIf(item -> item.getProduct().getId().equals(productId));
+    }
 }
