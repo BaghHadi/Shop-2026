@@ -1,6 +1,8 @@
 package fr.esiea.shop2026.adapters.rest;
 
 import fr.esiea.shop2026.domain.entities.Product;
+import fr.esiea.shop2026.usecase.dto.ProductRequestDTO;
+import fr.esiea.shop2026.usecase.dto.ProductResponseDTO;
 import fr.esiea.shop2026.usecase.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,9 +11,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/products") // URL: http://localhost:8080/products
+@RequestMapping("/products")
 @Tag(name = "Catalogue Produits", description = "Opérations liées à la gestion des articles (Ajout, modification, consultation)")
 public class ProductController {
 
@@ -21,47 +24,65 @@ public class ProductController {
         this.productService = productService;
     }
 
-    // POST /products (Créer un produit)
+    // POST /products
     @Operation(summary = "Créer un produit", description = "Ajoute un nouveau produit au catalogue avec son stock et son prix.")
     @PostMapping
-    public ResponseEntity<Product> create(@RequestBody Product product) {
-        Product created = productService.createProduct(product);
-        return ResponseEntity.ok(created);
+    public ResponseEntity<ProductResponseDTO> create(@RequestBody ProductRequestDTO dto) {
+        // Mapping DTO -> Entity
+        Product productToCreate = new Product(null, dto.name, dto.description, dto.price, dto.stockQuantity);
+
+        Product created = productService.createProduct(productToCreate);
+
+        // Mapping Entity -> ResponseDTO
+        return ResponseEntity.ok(mapToResponse(created));
     }
 
-    // GET /products/{id} (Récupérer un produit)
+    // GET /products/{id}
     @Operation(summary = "Récupérer un produit", description = "Retourne les détails d'un produit spécifique via son ID.")
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getById(@PathVariable UUID id) {
+    public ResponseEntity<ProductResponseDTO> getById(@PathVariable UUID id) {
         try {
-            return ResponseEntity.ok(productService.getProduct(id));
+            Product product = productService.getProduct(id);
+            return ResponseEntity.ok(mapToResponse(product));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    // GET /products (Récupérer tous les produits)
+    // GET /products
     @Operation(summary = "Lister les produits", description = "Récupère la liste complète de tous les produits disponibles en base.")
     @GetMapping
-    public List<Product> getAll() {
-        return productService.getAllProducts();
+    public List<ProductResponseDTO> getAll() {
+        return productService.getAllProducts().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
-    // DELETE /products/{id} (Supprimer un produit)
+    // DELETE /products/{id}
     @Operation(summary = "Supprimer un produit", description = "Retire définitivement un produit du catalogue.")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
+
+    // PUT /products/{id}
     @Operation(summary = "Modifier un produit", description = "Met à jour les informations (nom, prix, stock) d'un produit existant.")
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable UUID id, @RequestBody Product product) {
+    public ResponseEntity<ProductResponseDTO> updateProduct(@PathVariable UUID id, @RequestBody ProductRequestDTO dto) {
         try {
-            Product updated = productService.updateProduct(id, product);
-            return ResponseEntity.ok(updated);
+            // Mapping DTO -> Entity
+            Product productInfos = new Product(null, dto.name, dto.description, dto.price, dto.stockQuantity);
+
+            Product updated = productService.updateProduct(id, productInfos);
+            return ResponseEntity.ok(mapToResponse(updated));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    // Helper privé pour convertir Product -> ProductResponseDTO
+    private ProductResponseDTO mapToResponse(Product p) {
+        return new ProductResponseDTO(p.getId(), p.getName(), p.getDescription(), p.getPrice(), p.getStockQuantity());
     }
 }
