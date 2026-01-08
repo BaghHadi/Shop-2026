@@ -47,4 +47,13 @@ public class ProductController {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<Product> updateProduct(@PathVariable UUID id, @RequestBody Product product) {
+        try {
+            Product updated = productService.updateProduct(id, product);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

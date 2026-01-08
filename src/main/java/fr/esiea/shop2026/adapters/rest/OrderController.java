@@ -42,4 +42,13 @@ public class OrderController {
     public ResponseEntity<List<Order>> getAllOrders() {
         return ResponseEntity.ok(orderService.getAllOrders());
     }
+    // PATCH /orders/{id}/validate
+    @PatchMapping("/{id}/validate")
+    public ResponseEntity<Order> validateOrder(@PathVariable UUID id) {
+        try {
+            return ResponseEntity.ok(orderService.validateOrder(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

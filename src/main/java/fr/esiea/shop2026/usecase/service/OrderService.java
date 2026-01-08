@@ -51,4 +51,9 @@ public class OrderService {
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
     }
+    public Order validateOrder(UUID orderId) {
+        Order order = getOrder(orderId); // Récupère la commande
+        order.setStatus("CONFIRMED");    // Change le statut
+        return orderRepository.save(order); // Sauvegarde
+    }
 }

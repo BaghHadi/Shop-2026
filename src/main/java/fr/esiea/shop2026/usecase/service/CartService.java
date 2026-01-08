@@ -42,4 +42,9 @@ public class CartService {
         Cart cart = getCart(userId);
         cartRepository.deleteById(cart.getId());
     }
+    public Cart removeProductFromCart(UUID userId, UUID productId) {
+        Cart cart = getCart(userId);
+        cart.removeProduct(productId);
+        return cartRepository.save(cart);
+    }
 }

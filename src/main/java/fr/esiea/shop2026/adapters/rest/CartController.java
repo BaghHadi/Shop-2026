@@ -43,4 +43,14 @@ public class CartController {
         cartService.clearCart(userId);
         return ResponseEntity.noContent().build();
     }
+    // DELETE /carts/{userId}/items/{productId}
+    @DeleteMapping("/{userId}/items/{productId}")
+    public ResponseEntity<Cart> removeProduct(@PathVariable UUID userId, @PathVariable UUID productId) {
+        try {
+            Cart cart = cartService.removeProductFromCart(userId, productId);
+            return ResponseEntity.ok(cart);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

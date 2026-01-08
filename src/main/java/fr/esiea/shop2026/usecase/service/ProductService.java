@@ -46,4 +46,17 @@ public class ProductService {
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
+    public Product updateProduct(UUID id, Product newInfos) {
+        // 1. On cherche le produit existant
+        Product existingProduct = getProduct(id); // (Utilise ta méthode getProduct qui lance une exception si pas trouvé)
+
+        // 2. On met à jour les champs
+        existingProduct.setName(newInfos.getName());
+        existingProduct.setDescription(newInfos.getDescription());
+        existingProduct.setPrice(newInfos.getPrice());
+        existingProduct.setStockQuantity(newInfos.getStockQuantity());
+
+        // 3. On sauvegarde (JPA va comprendre que c'est une mise à jour car l'ID existe déjà)
+        return productRepository.save(existingProduct);
+    }
 }
