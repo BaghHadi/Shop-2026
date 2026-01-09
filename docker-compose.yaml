@@ -1,6 +1,6 @@
 services:
   kafka:
-    image: confluentinc/cp-kafka:7.6.0
+    image: confluentinc/cp-kafka:7.8.6
     container_name: kafka
     hostname: kafka
     ports:
@@ -28,7 +28,7 @@ services:
       CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"  # stable, do not change once created
 
   kafka-ui:
-    image: provectuslabs/kafka-ui:latest
+    image: kafbat/kafka-ui:latest
     container_name: kafka-ui
     depends_on:
       - kafka
