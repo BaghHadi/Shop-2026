@@ -3,6 +3,7 @@ package fr.esiea.shop2026.adapters.rest;
 import fr.esiea.shop2026.domain.entities.Order;
 import fr.esiea.shop2026.usecase.dto.OrderItemDTO;
 import fr.esiea.shop2026.usecase.dto.OrderResponseDTO;
+import fr.esiea.shop2026.usecase.dto.OrderUpdateDTO;
 import fr.esiea.shop2026.usecase.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -53,10 +54,16 @@ public class OrderController {
 
     // PATCH /orders/{id}/validate
     @Operation(summary = "Valider une commande", description = "Passe le statut d'une commande de PENDING à CONFIRMED.")
-    @PatchMapping("/{id}/validate")
-    public ResponseEntity<OrderResponseDTO> validateOrder(@PathVariable UUID id) {
-        // ✅ Pas de try-catch
-        return ResponseEntity.ok(mapToDTO(orderService.validateOrder(id)));
+    @PatchMapping
+    public ResponseEntity<OrderResponseDTO> updateOrder(@RequestBody OrderUpdateDTO dto) {
+        // On vérifie si c'est une validation
+        if ("CONFIRMED".equalsIgnoreCase(dto.status)) {
+            Order validatedOrder = orderService.validateOrder(dto.orderId);
+            return ResponseEntity.ok(mapToDTO(validatedOrder));
+        }
+
+        // Si on gère d'autres statuts plus tard, on les ajoutera ici
+        return ResponseEntity.badRequest().build();
     }
 
     private OrderResponseDTO mapToDTO(Order order) {

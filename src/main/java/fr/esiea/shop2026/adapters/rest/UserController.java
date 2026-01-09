@@ -25,17 +25,13 @@ public class UserController {
         this.userService = userService;
     }
 
-    @Operation(summary = "Inscription", description = "Créer un nouveau compte Client ou Vendeur.")
-    @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> register(@RequestBody UserRegisterDTO dto) {
+    // POST /users (Au lieu de /users/register) -> C'est du pur CRUD (Create)
+    @Operation(summary = "Créer un utilisateur", description = "Inscrit un nouvel utilisateur avec rôle (CLIENT ou SELLER)")
+    @PostMapping
+    public ResponseEntity<UserResponseDTO> create(@RequestBody UserRegisterDTO dto) {
         User created = userService.createClient(
-                dto.firstName,
-                dto.lastName,
-                dto.email,
-                dto.password,
-                dto.address,
-                dto.phone,
-                dto.role
+                dto.firstName, dto.lastName, dto.email, dto.password,
+                dto.address, dto.phone, dto.role
         );
         return ResponseEntity.ok(mapToDTO(created));
     }

@@ -30,9 +30,8 @@ public class CartController {
 
     // POST /carts/add
     @Operation(summary = "Ajouter au panier", description = "Ajoute un produit au panier d'un utilisateur. Crée le panier s'il n'existe pas.")
-    @PostMapping("/add")
+    @PostMapping
     public ResponseEntity<CartResponseDTO> addItem(@RequestBody AddToCartDTO dto) {
-        // ✅ Pas de try-catch : InsufficientStockException ou NotFoundException seront gérés
         Cart cart = cartService.addProductToCart(dto.userId, dto.productId, dto.quantity);
         return ResponseEntity.ok(mapToDTO(cart));
     }
