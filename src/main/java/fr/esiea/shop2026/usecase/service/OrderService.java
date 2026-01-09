@@ -7,10 +7,11 @@ import fr.esiea.shop2026.domain.exception.NotFoundException;
 import fr.esiea.shop2026.domain.repository.CartRepository;
 import fr.esiea.shop2026.domain.repository.OrderEventRepository;
 import fr.esiea.shop2026.domain.repository.OrderRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
-
+@Service
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -25,12 +26,11 @@ public class OrderService {
         this.orderEventRepository = orderEventRepository;
     }
 
+
     public Order createOrderFromCart(UUID userId) {
-        // ✅ NotFoundException si le panier n'existe pas en base
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new NotFoundException("Cart", userId));
 
-        // ✅ EmptyCartException si le panier est vide
         if (cart.getItems().isEmpty()) {
             throw new EmptyCartException("Cannot create order from an empty cart.");
         }
@@ -43,10 +43,10 @@ public class OrderService {
         );
         Order savedOrder = orderRepository.save(order);
 
-        // Une fois commandé, on vide le panier et on notifie
-        cartRepository.deleteById(cart.getId());
+        // ✅ C'est ICI qu'on déclenche l'événement
         orderEventRepository.publishOrderCreated(savedOrder);
 
+        cartRepository.deleteById(cart.getId());
         return savedOrder;
     }
 

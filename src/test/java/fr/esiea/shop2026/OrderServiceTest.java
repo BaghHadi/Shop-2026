@@ -74,4 +74,5 @@ class OrderServiceTest {
         assertThrows(EmptyCartException.class, () -> orderService.createOrderFromCart(userId));
         verify(orderRepository, never()).save(any());
     }
+
 }

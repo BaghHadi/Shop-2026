@@ -4,7 +4,6 @@ import fr.esiea.shop2026.domain.entities.Order;
 import fr.esiea.shop2026.domain.repository.OrderEventRepository;
 import org.springframework.stereotype.Component;
 
-@Component
 public class ConsoleOrderEventAdapter implements OrderEventRepository {
 
     @Override
