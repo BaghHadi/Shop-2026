@@ -2,7 +2,6 @@ package fr.esiea.shop2026.usecase.service;
 
 import fr.esiea.shop2026.domain.entities.User;
 import fr.esiea.shop2026.domain.entities.UserEnum;
-import fr.esiea.shop2026.domain.repository.OrderRepository;
 import fr.esiea.shop2026.domain.repository.UserEventRepository;
 import fr.esiea.shop2026.domain.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
