@@ -30,11 +30,20 @@ services:
       # --- Cluster ID (stable) ---
       CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
 
+    healthcheck:
+      # Vérifie que Kafka répond bien
+      test: [ "CMD", "bash", "-c", "kafka-broker-api-versions --bootstrap-server localhost:9092 >/dev/null 2>&1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
   kafka-ui:
     image: kafbat/kafka-ui:latest
     container_name: kafka-ui
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     ports:
       - "8081:8080"
     environment:

@@ -112,7 +112,7 @@ public class ShopConsoleClient {
                 fname, lname, email, pwd, addr, phone, role
         );
 
-        sendRequest("POST", "/users/register", json);
+        sendRequest("POST", "/users", json);
         System.out.println(GREEN + "Compte créé avec succès ! Veuillez vous connecter." + RESET);
     }
 

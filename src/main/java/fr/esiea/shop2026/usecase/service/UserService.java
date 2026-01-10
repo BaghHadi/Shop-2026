@@ -2,6 +2,8 @@ package fr.esiea.shop2026.usecase.service;
 
 import fr.esiea.shop2026.domain.entities.User;
 import fr.esiea.shop2026.domain.entities.UserEnum;
+import fr.esiea.shop2026.domain.repository.OrderRepository;
+import fr.esiea.shop2026.domain.repository.UserEventRepository;
 import fr.esiea.shop2026.domain.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -13,19 +15,29 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder; // ✅ Injection
+    private final PasswordEncoder passwordEncoder;
+    private final UserEventRepository userEventRepository;
 
     // Constructeur avec injection des dépendances
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       UserEventRepository userEventRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userEventRepository = userEventRepository;
     }
 
     public User createClient(String firstName, String lastName, String email, String password, String deliveryAddress, String phone, UserEnum role) {
         // Hachage du mot de passe ICI avant d'envoyer au repository
         String encodedPassword = passwordEncoder.encode(password);
 
-        return userRepository.createClient(firstName, lastName, email, encodedPassword, deliveryAddress, phone, role);
+        // Sauvegarde de l'utilisateur dans la BDD
+        User user = userRepository.createClient(firstName, lastName, email, encodedPassword, deliveryAddress, phone, role);
+
+        // Envoie de l'événement Kafka
+        userEventRepository.publishUserCreated(user);
+
+        return user;
     }
 
     public User loginUser(String email, String rawPassword) {
