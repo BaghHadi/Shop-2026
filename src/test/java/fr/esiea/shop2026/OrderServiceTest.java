@@ -34,7 +34,7 @@ class OrderServiceTest {
 
     @Mock private OrderRepository orderRepository;
     @Mock private CartRepository cartRepository;
-    @Mock private OrderEventRepository orderEventRepository;
+    @Mock private OrderEventRepository orderEventRepository; // Le mock pour Kafka
 
     @InjectMocks private OrderService orderService;
 
@@ -42,9 +42,9 @@ class OrderServiceTest {
     void createOrderFromCart_Success() {
         // Arrange
         UUID userId = UUID.randomUUID();
-        // ✅ CORRECTION
-        Cart cart = new Cart(UUID.randomUUID(), userId);
 
+        // On crée un panier valide avec des items
+        Cart cart = new Cart(UUID.randomUUID(), userId);
         Product p = new Product(UUID.randomUUID(), "P1", "D", BigDecimal.TEN, 10);
         cart.addItem(p, 2);
 
@@ -57,7 +57,11 @@ class OrderServiceTest {
         // Assert
         assertNotNull(order);
         assertEquals(userId, order.getUserId());
+
+        // 1. On vérifie que le panier est vidé
         verify(cartRepository).deleteById(cart.getId());
+
+        // 2. ✅ IMPORTANT : On vérifie que l'événement Kafka est envoyé ICI (à la création)
         verify(orderEventRepository).publishOrderCreated(any(Order.class));
     }
 
@@ -65,14 +69,15 @@ class OrderServiceTest {
     void createOrderFromCart_EmptyCart_ThrowsException() {
         // Arrange
         UUID userId = UUID.randomUUID();
-        // ✅ CORRECTION : Panier vide mais bien instancié
-        Cart emptyCart = new Cart(UUID.randomUUID(), userId);
+        Cart emptyCart = new Cart(UUID.randomUUID(), userId); // Panier vide
 
         when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(emptyCart));
 
         // Act & Assert
         assertThrows(EmptyCartException.class, () -> orderService.createOrderFromCart(userId));
-        verify(orderRepository, never()).save(any());
-    }
 
+        // On vérifie qu'on ne sauvegarde RIEN et qu'on n'envoie RIEN à Kafka
+        verify(orderRepository, never()).save(any());
+        verify(orderEventRepository, never()).publishOrderCreated(any());
+    }
 }
