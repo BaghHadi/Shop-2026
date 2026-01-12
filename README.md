@@ -17,7 +17,7 @@ Bienvenue sur le backend de **Shop-2026**, une application e-commerce modulaire 
 
 ## 🏗 Architecture
 
-Le projet respecte une séparation stricte des responsabilités (Architecture Hexagonale) :
+Le projet respecte une séparation stricte des responsabilités :
 
 1.  **Domain** : Le cœur du métier (Entités, Exceptions, Interfaces des Ports). Aucune dépendance externe (Framework agnostique).
 2.  **UseCase** : La logique applicative (Services, DTOs). Orchestre le domaine.
@@ -65,25 +65,8 @@ Si vous souhaitez lancer l'application via IntelliJ ou un terminal sans Dockeris
     docker compose up kafka kafka-ui -d
     ```
 
-2.  **Lancer l'application Spring Boot :**
-    ```bash
-    ./mvnw spring-boot:run
-    ```
+2.  **Lancer l'application Spring Boot avec  IntelliJ**
 
----
-
-## 📡 API Endpoints Principaux
-
-L'API respecte les conventions RESTful.
-
-| Méthode | Endpoint | Description | Body requis (JSON) |
-| :--- | :--- | :--- | :--- |
-| **POST** | `/users` | Inscription d'un utilisateur | `{ "firstName": "...", "email": "..." }` |
-| **POST** | `/sessions` | Connexion (Login) | `{ "email": "...", "password": "..." }` |
-| **GET** | `/products` | Liste des produits | - |
-| **POST** | `/carts` | Ajouter un produit au panier | `{ "userId": "...", "productId": "...", "quantity": 1 }` |
-| **POST** | `/orders` | Créer une commande (Statut: PENDING) | `{ "userId": "..." }` |
-| **PATCH** | `/orders` | Valider une commande (Statut: CONFIRMED) | `{ "orderId": "...", "status": "CONFIRMED" }` |
 
 ---
 
@@ -98,7 +81,7 @@ Le système utilise Kafka pour découpler les services et réagir aux changement
 * **Action :** Le service de notification reçoit l'événement et simule l'envoi d'un email de bienvenue.
 
 ### 2. Validation de Commande (`order-created`)
-* **Déclencheur :** `PATCH /orders` (Passage de PENDING à CONFIRMED)
+* **Déclencheur :** `PATCH /orders` 
 * **Producteur :** `KafkaOrderEventAdapter`
 * **Consommateur :** `OrderEventListener`
 * **Action :** Le service logistique reçoit l'événement, génère une étiquette d'expédition et prépare le colis.
@@ -109,5 +92,5 @@ Le système utilise Kafka pour découpler les services et réagir aux changement
 
 Projet réalisé dans le cadre du cours d'Architecture Logicielle (ESIEA - 4A).
 
-* **Abdelhadi**
-* **Julian**
+* **Abdelhadi BAGHDADLI**
+* **Julian DOLOIR**
